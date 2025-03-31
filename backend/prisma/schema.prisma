@@ -1,0 +1,203 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Usuario
+model User {
+  id            Int           @id @default(autoincrement())
+  username      String        @unique
+  password      String
+  email         String?       @unique
+  role          String        @default("general") // "admin", "superadmin", "general"
+  grado         String        @default("aprendiz") // "aprendiz", "companero", "maestro"
+  cargo         String?
+  memberFullName String?
+  miembro       Miembro?      @relation(fields: [miembroId], references: [id])
+  miembroId     Int?          @unique
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Relaciones
+  documentosCreados  Documento[]  @relation("DocumentoCreador")
+  registrosAsistencia  Asistencia[] @relation("RegistroAsistencia")
+  notificaciones      Notificacion[] @relation("Notificaciones")
+}
+
+// Modelo de Miembro
+model Miembro {
+  id               Int           @id @default(autoincrement())
+  nombres          String
+  apellidos        String
+  rut              String        @unique
+  grado            String        @default("aprendiz")
+  cargo            String?
+  vigente          Boolean       @default(true)
+  
+  // Contacto
+  email            String?
+  telefono         String?
+  direccion        String?
+  
+  // Profesional
+  profesion        String?
+  ocupacion        String?
+  trabajoNombre    String?
+  trabajoDireccion String?
+  trabajoTelefono  String?
+  trabajoEmail     String?
+  
+  // Familiar
+  parejaNombre     String?
+  parejaTelefono   String?
+  contactoEmergenciaNombre String?
+  contactoEmergenciaTelefono String?
+  
+  // Fechas importantes
+  fechaNacimiento  DateTime?
+  fechaIniciacion  DateTime?
+  fechaAumentoSalario DateTime?
+  fechaExaltacion  DateTime?
+  
+  // Salud
+  situacionSalud   String?
+  
+  // Metadatos
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  // Relaciones
+  usuario          User?
+  asistencias      Asistencia[]
+  documentos       Documento[]   @relation("DocumentoAutor")
+  programasResponsable Programa[] @relation("ProgramaResponsable")
+}
+
+// Modelo de Documento
+model Documento {
+  id               Int           @id @default(autoincrement())
+  nombre           String
+  tipo             String        // "pdf", "docx", "xlsx", etc.
+  descripcion      String?
+  tamano           String?       // Tamaño en bytes como string
+  url              String?
+  localPath        String?
+  
+  // Clasificación
+  categoria        String        // "aprendices", "companeros", "maestros", "general", etc.
+  subcategoria     String?
+  palabrasClave    String?
+  
+  // Si es plancha
+  esPlancha        Boolean       @default(false)
+  planchaId        String?
+  planchaEstado    String?       // "pendiente", "aprobada", "rechazada"
+  
+  // Autor
+  autor           Miembro?       @relation("DocumentoAutor", fields: [autorId], references: [id])
+  autorId         Int?
+  
+  // Subido por
+  subidoPor       User           @relation("DocumentoCreador", fields: [subidoPorId], references: [id])
+  subidoPorId     Int
+  
+  // Metadatos
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+// Modelo de Programa
+model Programa {
+  id               Int           @id @default(autoincrement())
+  tema             String
+  fecha            DateTime
+  encargado        String
+  quienImparte     String?
+  resumen          String?
+  
+  // Clasificación
+  grado            String        // "aprendiz", "companero", "maestro", "general"
+  tipo             String        // "camara", "trabajo", "instruccion", etc.
+  estado           String        @default("Pendiente") // "Pendiente", "Programado", "Completado", "Cancelado"
+  
+  // Items relacionados
+  documentosJson   String?       // JSON string de documentos asociados
+  
+  // Creador
+  responsable      Miembro?      @relation("ProgramaResponsable", fields: [responsableId], references: [id])
+  responsableId    Int?
+  
+  // Ubicación
+  ubicacion        String?
+  
+  // Info adicional
+  detallesAdicionales String?
+  
+  // Metadatos
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  // Relaciones
+  asistencias      Asistencia[]
+}
+
+// Modelo de Asistencia
+model Asistencia {
+  id               Int           @id @default(autoincrement())
+  programa         Programa      @relation(fields: [programaId], references: [id])
+  programaId       Int
+  miembro          Miembro       @relation(fields: [miembroId], references: [id])
+  miembroId        Int
+  asistio          Boolean       @default(false)
+  justificacion    String?
+  
+  // Registro
+  registradoPor    User?         @relation("RegistroAsistencia", fields: [registradoPorId], references: [id])
+  registradoPorId  Int?
+  horaRegistro     DateTime      @default(now())
+  
+  // Metadatos
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  @@unique([programaId, miembroId])
+}
+
+// Modelo de Notificación
+model Notificacion {
+  id               Int           @id @default(autoincrement())
+  titulo           String
+  mensaje          String
+  tipo             String        // "programa", "administrativo", "mensaje", "alerta", etc.
+  
+  // Relacionado
+  relacionadoTipo  String?
+  relacionadoId    String?
+  
+  // Estado
+  leido            Boolean       @default(false)
+  leidoAt          DateTime?
+  
+  // Usuario destino
+  usuario          User          @relation("Notificaciones", fields: [usuarioId], references: [id])
+  usuarioId        Int
+  gradoDestino     String?
+  
+  // Remitente
+  remitenteTipo    String?       // "system", "user", "admin"
+  remitenteId      String?
+  remitenteNombre  String?
+  
+  // Metadatos
+  createdAt        DateTime      @default(now())
+  expiresAt        DateTime?
+  isPriority       Boolean       @default(false)
+}
