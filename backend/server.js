@@ -20,17 +20,17 @@ app.use(express.json());
 const authRoutes = require('./routes/auth');
 const miembrosRoutes = require('./routes/miembros');
 const documentosRoutes = require('./routes/documentos');
-const programasRoutes = require('./routes/programas');
-const asistenciaRoutes = require('./routes/asistencia');
-const notificacionesRoutes = require('./routes/notificaciones');
+//const programasRoutes = require('./routes/programas');
+//const asistenciaRoutes = require('./routes/asistencia');
+//const notificacionesRoutes = require('./routes/notificaciones');
 
 // Usar rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/miembros', miembrosRoutes);
 app.use('/api/documentos', documentosRoutes);
-app.use('/api/programas', programasRoutes);
-app.use('/api/asistencia', asistenciaRoutes);
-app.use('/api/notificaciones', notificacionesRoutes);
+//app.use('/api/programas', programasRoutes);
+//app.use('/api/asistencia', asistenciaRoutes);
+//app.use('/api/notificaciones', notificacionesRoutes);
 
 // Ruta para comprobar que el servidor está funcionando
 app.get('/', (req, res) => {
