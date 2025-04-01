@@ -1,3 +1,5 @@
+// lib/core/errors/exceptions.dart
+
 class ServerException implements Exception {
   final String message;
   
@@ -14,4 +16,22 @@ class ValidationException implements Exception {
   final String message;
   
   ValidationException({this.message = 'Error de validación'});
+}
+
+class NotFoundException implements Exception {
+  final String message;
+  
+  NotFoundException({this.message = 'Recurso no encontrado'});
+}
+
+class CacheException implements Exception {
+  final String message;
+  
+  CacheException({this.message = 'Error de caché local'});
+}
+
+class NetworkException implements Exception {
+  final String message;
+  
+  NetworkException({this.message = 'Error de red'});
 }

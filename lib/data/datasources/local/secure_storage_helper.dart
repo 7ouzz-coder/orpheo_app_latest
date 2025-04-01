@@ -20,7 +20,7 @@ class SecureStorageHelper {
     value = await _secureStorage.read(key: alternateKey);
   }
   return value ?? defaultValue;
-}
+  }
 
   // Datos de usuario
   Future<void> saveUserData(Map<String, dynamic> userData) async {
@@ -44,5 +44,15 @@ class SecureStorageHelper {
 
   Future<void> clearAll() async {
     await _secureStorage.deleteAll();
+  }
+
+  // Método para guardar preferencias generales
+  Future<void> savePreference(String key, String value) async {
+    await _secureStorage.write(key: key, value: value);
+  }
+
+  // Método para obtener preferencias generales
+  Future<String?> getPreference(String key) async {
+    return await _secureStorage.read(key: key);
   }
 }
