@@ -6,6 +6,8 @@ import 'package:orpheo_app/core/di/injection_container.dart' as di;
 import 'package:orpheo_app/core/router/app_router.dart';
 import 'package:orpheo_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:orpheo_app/presentation/bloc/auth/auth_event.dart';
+import 'package:orpheo_app/presentation/bloc/documentos/documentos_bloc.dart';
+import 'package:orpheo_app/presentation/bloc/miembros/miembros_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +27,12 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider<AuthBloc>(
           create: (context) => di.sl<AuthBloc>()..add(AppStarted()),
+        ),
+        BlocProvider<MiembrosBloc>(
+          create: (context) => di.sl<MiembrosBloc>(),
+        ),
+        BlocProvider<DocumentosBloc>(
+          create: (context) => di.sl<DocumentosBloc>(),
         ),
       ],
       child: MaterialApp(
@@ -50,6 +58,13 @@ class MyApp extends StatelessWidget {
               ),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
+          ),
+          cardTheme: CardTheme(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            clipBehavior: Clip.antiAlias,
           ),
         ),
         initialRoute: '/',

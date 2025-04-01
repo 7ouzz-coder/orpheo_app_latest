@@ -42,12 +42,12 @@ class AuthRepositoryImpl implements AuthRepository {
         'username': response.user.username,
         'role': response.user.role,
         'grado': response.user.grado,
-        'cargo': response.user.cargo,
-        'memberFullName': response.user.memberFullName,
+        'cargo': response.user.cargo ?? '',
+        'memberFullName': response.user.memberFullName ?? '',
         'miembroId': response.user.miembroId != null 
             ? response.user.miembroId.toString() 
-            : null,
-        'email': response.user.email,
+            : '',
+        'email': response.user.email ?? '',
       };
       
       await secureStorage.saveUserData(userData);
@@ -95,25 +95,34 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, UserModel>> getCurrentUser() async {
     try {
       // Obtener datos del usuario desde el almacenamiento seguro
-      final username = await secureStorage.getValueOrDefault('username', 'username');
-      final memberFullName = await secureStorage.getValueOrDefault('member_full_name', 'username');
-      final grado = await secureStorage.getValueOrDefault('grado', 'grado', defaultValue: 'aprendiz');
-      final role = await secureStorage.getValueOrDefault('role', 'role', defaultValue: 'general');
-      final cargo = await secureStorage.getValueOrDefault('cargo', 'cargo', defaultValue: '');
+      final id = await secureStorage.getValueOrDefault('user_id', 'id', defaultValue: '0');
+      final username = await secureStorage.getValueOrDefault('username', 'username', defaultValue: '');
       final email = await secureStorage.getValueOrDefault('email', 'email', defaultValue: '');
-      final id = await secureStorage.getValueOrDefault('id', 'id', defaultValue: '0');
-      final miembroIdString = await secureStorage.getValueOrDefault('miembro_id', 'miembro_id', defaultValue: '');
-      final miembroId = miembroIdString.isNotEmpty ? int.parse(miembroIdString) : null;
+      final role = await secureStorage.getValueOrDefault('role', 'role', defaultValue: 'general');
+      final grado = await secureStorage.getValueOrDefault('grado', 'grado', defaultValue: 'aprendiz');
+      final cargo = await secureStorage.getValueOrDefault('cargo', 'cargo', defaultValue: '');
+      final memberFullName = await secureStorage.getValueOrDefault('member_full_name', 'memberFullName', defaultValue: '');
+      final miembroIdStr = await secureStorage.getValueOrDefault('miembro_id', 'miembroId', defaultValue: '');
+      
+      int? miembroId;
+      if (miembroIdStr.isNotEmpty) {
+        try {
+          miembroId = int.parse(miembroIdStr);
+        } catch (_) {
+          miembroId = null;
+        }
+      }
+      
       // Reconstruir el objeto usuario
       final user = UserModel(
-        id: int.parse(id),
+        id: int.tryParse(id) ?? 0,
         username: username,
-        email: email,
+        email: email.isEmpty ? null : email,
         role: role,
         grado: grado,
         cargo: cargo.isEmpty ? null : cargo,
-        memberFullName: memberFullName,
-        miembroId: miembroId != null ? int.parse(miembroId) : null,
+        memberFullName: memberFullName.isEmpty ? null : memberFullName,
+        miembroId: miembroId,
       );
       
       return Right(user);

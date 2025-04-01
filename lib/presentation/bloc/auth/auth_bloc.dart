@@ -1,18 +1,20 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:orpheo_app/data/datasources/local/secure_storage_helper.dart';
 import 'package:orpheo_app/data/datasources/remote/auth_remote_datasource.dart';
+import 'package:orpheo_app/data/models/auth/login_response_model.dart';
+import 'package:orpheo_app/domain/repositories/auth_repository.dart';
 import 'package:orpheo_app/presentation/bloc/auth/auth_event.dart';
 import 'package:orpheo_app/presentation/bloc/auth/auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRemoteDataSource authRemoteDataSource;
   final SecureStorageHelper secureStorage;
+  final AuthRepository authRepository;
   
   AuthBloc({
     required this.authRemoteDataSource,
     required this.secureStorage,
+    required this.authRepository,
   }) : super(AuthInitial()) {
     on<AppStarted>(_onAppStarted);
     on<LoggedIn>(_onLoggedIn);
@@ -24,33 +26,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     
     try {
-      final token = await secureStorage.getToken();
+      final isAuthenticated = await authRepository.isAuthenticated();
       
-      if (token != null && token.isNotEmpty) {
-        // Si tenemos un token, obtenemos los datos del usuario
-        final username = await secureStorage.getValueOrDefault('username', 'username');
-        final memberFullName = await secureStorage.getValueOrDefault('member_full_name', 'username');
-        final grado = await secureStorage.getValueOrDefault('grado', 'grado', defaultValue: 'aprendiz');
-        final role = await secureStorage.getValueOrDefault('role', 'role', defaultValue: 'general');
-        final cargo = await secureStorage.getValueOrDefault('cargo', 'cargo', defaultValue: '');
-        final email = await secureStorage.getValueOrDefault('email', 'email', defaultValue: '');
-        final id = await secureStorage.getValueOrDefault('id', 'id', defaultValue: '0');
-        final miembroId = await secureStorage.read(key: 'miembro_id') ?? null;
+      if (isAuthenticated) {
+        // Si estamos autenticados, obtenemos los datos del usuario actual
+        final userResult = await authRepository.getCurrentUser();
         
-        // Reconstruimos el objeto usuario
-        final user = UserModel(
-          id: int.parse(id),
-          username: username,
-          email: email,
-          role: role,
-          grado: grado,
-          cargo: cargo.isEmpty ? null : cargo,
-          memberFullName: memberFullName,
-          miembroId: miembroId != null ? int.parse(miembroId) : null,
+        userResult.fold(
+          (failure) => emit(AuthUnauthenticated()), 
+          (user) => emit(AuthAuthenticated(user))
         );
-        
-        // Emitimos estado autenticado
-        emit(AuthAuthenticated(user));
       } else {
         // No hay token o token inválido
         emit(AuthUnauthenticated());
@@ -65,42 +50,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     
     try {
-      final response = await authRemoteDataSource.login(
+      final result = await authRepository.login(
         event.username,
         event.password,
       );
       
-      // Guardar token y datos de usuario
-      await secureStorage.saveToken(response.token);
-      
-      final userData = {
-        'id': response.user.id.toString(),
-        'username': response.user.username,
-        'role': response.user.role,
-        'grado': response.user.grado,
-        'cargo': response.user.cargo,
-        'memberFullName': response.user.memberFullName,
-        'miembroId': response.user.miembroId != null 
-            ? response.user.miembroId.toString() 
-            : null,
-        'email': response.user.email,
-      };
-      
-      await secureStorage.saveUserData(userData);
-      
-      // Si está marcado "recordarme", guardar preferencia
-      if (event.rememberMe) {
-        try {
-          // Si existe el método savePreference
-          await secureStorage.savePreference('remember_me', 'true');
-        } catch (e) {
-          // Si no existe, ignoramos el error
-          print('Método savePreference no implementado: $e');
+      result.fold(
+        (failure) => emit(AuthError(failure.message)), 
+        (loginResponse) {
+          // Si está marcado "recordarme", guardar preferencia
+          if (event.rememberMe) {
+            secureStorage.savePreference('remember_me', 'true');
+          }
+          
+          // Emitir estado autenticado
+          emit(AuthAuthenticated(loginResponse.user));
         }
-      }
-      
-      // Emitir estado autenticado
-      emit(AuthAuthenticated(response.user));
+      );
     } catch (e) {
       // Error en inicio de sesión
       String errorMessage = 'Error de inicio de sesión';
@@ -118,13 +84,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     
     try {
-      final response = await authRemoteDataSource.register(event.userData);
+      final result = await authRepository.register(event.userData);
       
-      if (response.success) {
-        emit(AuthRegistrationSuccess(response.message));
-      } else {
-        emit(AuthRegistrationError('Error en el registro: ${response.message}'));
-      }
+      result.fold(
+        (failure) => emit(AuthRegistrationError(failure.message)), 
+        (success) {
+          if (success) {
+            emit(const AuthRegistrationSuccess('Registro exitoso. Por favor inicie sesión.'));
+          } else {
+            emit(const AuthRegistrationError('Error en el registro. Intente nuevamente.'));
+          }
+        }
+      );
     } catch (e) {
       emit(AuthRegistrationError('Error en el registro: ${e.toString()}'));
     }
@@ -134,8 +105,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     
     try {
-      await secureStorage.clearAll();
-      emit(AuthUnauthenticated());
+      final result = await authRepository.logout();
+      
+      result.fold(
+        (failure) => emit(AuthError(failure.message)), 
+        (_) => emit(AuthUnauthenticated())
+      );
     } catch (e) {
       emit(AuthError('Error al cerrar sesión: ${e.toString()}'));
     }
