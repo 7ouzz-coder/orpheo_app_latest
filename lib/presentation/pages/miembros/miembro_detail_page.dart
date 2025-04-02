@@ -1,13 +1,8 @@
 // lib/presentation/pages/miembros/miembro_detail_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:orpheo_app/core/di/injection_container.dart';
 import 'package:orpheo_app/domain/entities/miembro.dart';
-import 'package:orpheo_app/presentation/bloc/miembros/miembros_bloc.dart';
-import 'package:orpheo_app/presentation/bloc/miembros/miembros_event.dart';
-import 'package:orpheo_app/presentation/bloc/miembros/miembros_state.dart';
 
 class MiembroDetailPage extends StatelessWidget {
   final int miembroId;
@@ -19,69 +14,36 @@ class MiembroDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<MiembrosBloc>()..add(GetMiembroDetails(miembroId: miembroId)),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Detalle de Miembro'),
-          actions: [
-            BlocBuilder<MiembrosBloc, MiembrosState>(
-              builder: (context, state) {
-                if (state is MiembroDetailsLoaded) {
-                  return IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () {
-                      // Navegar a la página de edición del miembro
-                      // Por ahora solo mostramos un mensaje
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Función de editar no implementada aún')),
-                      );
-                    },
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          ],
-        ),
-        body: BlocBuilder<MiembrosBloc, MiembrosState>(
-          builder: (context, state) {
-            if (state is MiembrosLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            
-            if (state is MiembrosError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(
-                      state.message,
-                      style: const TextStyle(fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        context.read<MiembrosBloc>().add(GetMiembroDetails(miembroId: miembroId));
-                      },
-                      child: const Text('Reintentar'),
-                    ),
-                  ],
-                ),
+    // Para demostración, simulamos un miembro
+    final miembro = Miembro(
+      id: miembroId,
+      nombres: "Usuario",
+      apellidos: "de Prueba",
+      rut: "12345678-9",
+      grado: "maestro",
+      cargo: "Venerable Maestro",
+      email: "usuario@ejemplo.com",
+      telefono: "+56912345678",
+      fechaIniciacion: DateTime(2015, 5, 15),
+      fechaAumentoSalario: DateTime(2017, 7, 20),
+      fechaExaltacion: DateTime(2019, 10, 10),
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Detalle de Miembro'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Función de editar no implementada aún')),
               );
-            }
-            
-            if (state is MiembroDetailsLoaded) {
-              return _buildMiembroDetails(context, state.miembro);
-            }
-            
-            return const Center(child: Text('Estado no manejado'));
-          },
-        ),
+            },
+          ),
+        ],
       ),
+      body: _buildMiembroDetails(context, miembro),
     );
   }
   
@@ -227,42 +189,6 @@ class MiembroDetailPage extends StatelessWidget {
               ],
             ],
           ),
-          
-          const SizedBox(height: 16),
-          
-          // Información de emergencia
-          if (miembro.contactoEmergenciaNombre != null || miembro.contactoEmergenciaTelefono != null) ...[
-            _buildSectionCard(
-              title: 'Contacto de Emergencia',
-              icon: Icons.emergency,
-              children: [
-                _buildInfoRow(
-                  'Nombre',
-                  miembro.contactoEmergenciaNombre ?? 'No disponible',
-                  Icons.person,
-                ),
-                const SizedBox(height: 12),
-                _buildInfoRow(
-                  'Teléfono',
-                  miembro.contactoEmergenciaTelefono ?? 'No disponible',
-                  Icons.phone,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
-          
-          // Información de salud
-          if (miembro.situacionSalud != null && miembro.situacionSalud!.isNotEmpty) ...[
-            _buildSectionCard(
-              title: 'Información de Salud',
-              icon: Icons.medical_services,
-              children: [
-                Text(miembro.situacionSalud!),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
         ],
       ),
     );

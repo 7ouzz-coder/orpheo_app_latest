@@ -6,8 +6,6 @@ import 'package:orpheo_app/core/di/injection_container.dart' as di;
 import 'package:orpheo_app/core/router/app_router.dart';
 import 'package:orpheo_app/presentation/bloc/auth/auth_bloc.dart';
 import 'package:orpheo_app/presentation/bloc/auth/auth_event.dart';
-import 'package:orpheo_app/presentation/bloc/documentos/documentos_bloc.dart';
-import 'package:orpheo_app/presentation/bloc/miembros/miembros_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,12 +26,13 @@ class MyApp extends StatelessWidget {
         BlocProvider<AuthBloc>(
           create: (context) => di.sl<AuthBloc>()..add(AppStarted()),
         ),
-        BlocProvider<MiembrosBloc>(
+        // Comenta temporalmente los BlocProviders que dan error
+        /*BlocProvider<MiembrosBloc>(
           create: (context) => di.sl<MiembrosBloc>(),
         ),
         BlocProvider<DocumentosBloc>(
           create: (context) => di.sl<DocumentosBloc>(),
-        ),
+        ),*/
       ],
       child: MaterialApp(
         title: 'Orpheo App',

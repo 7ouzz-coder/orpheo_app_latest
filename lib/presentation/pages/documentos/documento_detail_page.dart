@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:orpheo_app/core/di/injection_container.dart';
-import 'package:orpheo_app/domain/entities/documento.dart';
+import 'package:orpheo_app/domain/entities/documentos/documento.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_bloc.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_event.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_state.dart';
+import 'package:url_launcher/url_launcher.dart' as launcher;
 import 'package:path/path.dart' as path;
-import 'package:url_launcher/url_launcher.dart';
 
 class DocumentoDetailPage extends StatelessWidget {
   final int documentoId;

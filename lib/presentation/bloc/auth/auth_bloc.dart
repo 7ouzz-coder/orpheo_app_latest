@@ -68,14 +68,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         }
       );
     } catch (e) {
-      // Error en inicio de sesión
       String errorMessage = 'Error de inicio de sesión';
       if (e.toString().contains('Credenciales inválidas')) {
         errorMessage = 'Usuario o contraseña incorrectos';
-      } else if (e.toString().contains('inactivo')) {
-        errorMessage = 'Su cuenta está inactiva o pendiente de aprobación';
+      } else if (e.toString().contains('Network')) {
+        errorMessage = 'Error de conexión. Verifique su internet';
       }
-      
       emit(AuthError(errorMessage));
     }
   }

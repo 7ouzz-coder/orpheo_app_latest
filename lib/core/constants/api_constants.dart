@@ -1,6 +1,8 @@
 class ApiConstants {
-  static const String baseUrl = 'http://10.0.2.2:3000/api'; // Para emulador Android
-  // static const String baseUrl = 'http://localhost:3000/api'; // Para dispositivos iOS
+  static const String baseUrl = const String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:3000/api', // For Android emulator
+  );
 
   // Auth endpoints
   static const String login = '/auth/login';

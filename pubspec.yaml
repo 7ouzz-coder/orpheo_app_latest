@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ">=2.17.0 <3.0.0"  # Updated to enforce null safety
 
 dependencies:
   flutter:
@@ -29,8 +29,9 @@ dependencies:
   http: ^1.1.0
   flutter_secure_storage: ^8.0.0
   path_provider: ^2.0.15
-  file_picker: ^8.0.0
-  image_picker: ^1.0.7  # 🔹 Añadido para seleccionar imágenes/videos
+  file_picker: ^6.1.1  # Updated version
+  image_picker: ^1.0.7
+  url_launcher: ^6.1.14
 
   # Otros
   json_annotation: ^4.8.1

@@ -1,8 +1,15 @@
 // lib/presentation/pages/miembros/miembros_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:orpheo_app/data/datasources/local/secure_storage_helper.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:orpheo_app/core/di/injection_container.dart';
+import 'package:orpheo_app/domain/entities/miembro.dart';
+import 'package:orpheo_app/presentation/bloc/auth/auth_bloc.dart';
+import 'package:orpheo_app/presentation/bloc/auth/auth_state.dart';
+import 'package:orpheo_app/presentation/bloc/miembros/miembros_bloc.dart';
+import 'package:orpheo_app/presentation/bloc/miembros/miembros_event.dart';
+import 'package:orpheo_app/presentation/bloc/miembros/miembros_state.dart';
+import 'package:orpheo_app/presentation/pages/miembros/miembro_detail_page.dart';
 
 class MiembrosPage extends StatefulWidget {
   const MiembrosPage({Key? key}) : super(key: key);
@@ -14,74 +21,94 @@ class MiembrosPage extends StatefulWidget {
 class _MiembrosPageState extends State<MiembrosPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _userGrado = 'aprendiz';
-  bool _isLoading = true;
+  final TextEditingController _searchController = TextEditingController();
   
   @override
   void initState() {
     super.initState();
     _loadUserGrado();
-    // Inicializar con 3 tabs por defecto (podría ajustarse basado en el grado)
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 1, vsync: this); // Inicializado con 1, se actualizará después
   }
   
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
   
-  Future<void> _loadUserGrado() async {
-    try {
-      final secureStorage = SecureStorageHelper(const FlutterSecureStorage());
-      final grado = await secureStorage.getValueOrDefault('grado', 'grado', defaultValue: 'aprendiz');
-      
+  void _loadUserGrado() {
+    // Obtenemos el grado del usuario del AuthBloc
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
       setState(() {
-        _userGrado = grado;
-        _isLoading = false;
+        _userGrado = authState.user.grado;
+        _initTabController();
       });
-      
-      // Ajustar el número de tabs según el grado del usuario
-      int tabCount;
-      switch(_userGrado) {
-        case 'maestro':
-          tabCount = 3; // Puede ver todos los grados
-          break;
-        case 'companero':
-          tabCount = 2; // Puede ver aprendices y compañeros
-          break;
-        case 'aprendiz':
-        default:
-          tabCount = 1; // Solo puede ver aprendices
-          break;
-      }
-      
-      _tabController = TabController(length: tabCount, vsync: this);
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar información: $e')),
-      );
     }
+  }
+  
+  void _initTabController() {
+    // Ajustar el número de tabs según el grado del usuario
+    int tabCount;
+    switch(_userGrado) {
+      case 'maestro':
+        tabCount = 3; // Puede ver todos los grados
+        break;
+      case 'companero':
+        tabCount = 2; // Puede ver aprendices y compañeros
+        break;
+      case 'aprendiz':
+      default:
+        tabCount = 1; // Solo puede ver aprendices
+        break;
+    }
+    
+    _tabController = TabController(length: tabCount, vsync: this);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Miembros'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: _buildTabs(),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(100),
+          child: Column(
+            children: [
+              // Barra de búsqueda
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar miembros',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        // _onSearchCleared(context);
+                      },
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  // onChanged: (value) => _onSearch(context, value),
+                ),
+              ),
+              
+              // Tabs para filtrar por grado
+              TabBar(
+                controller: _tabController,
+                tabs: _buildTabs(),
+                // onTap: (index) => _onTabSelected(context, index),
+              ),
+            ],
+          ),
         ),
       ),
       body: TabBarView(
@@ -90,6 +117,8 @@ class _MiembrosPageState extends State<MiembrosPage> with SingleTickerProviderSt
       ),
       floatingActionButton: _userGrado == 'maestro' ? FloatingActionButton(
         onPressed: () {
+          // Navegar a la pantalla de agregar miembro
+          // Navigator.push(context, MaterialPageRoute(builder: (context) => const AddMiembroPage()));
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Función de agregar miembro no implementada aún')),
           );
@@ -98,6 +127,8 @@ class _MiembrosPageState extends State<MiembrosPage> with SingleTickerProviderSt
       ) : null,
     );
   }
+  
+  // Métodos para manejo de tabs y eventos
   
   List<Widget> _buildTabs() {
     final tabs = <Widget>[];
@@ -122,22 +153,22 @@ class _MiembrosPageState extends State<MiembrosPage> with SingleTickerProviderSt
     final views = <Widget>[];
     
     // Aprendices (visible para todos)
-    views.add(_buildMiembrosList('aprendiz'));
+    views.add(_buildMiembrosListView('aprendiz'));
     
     // Compañeros (visible para compañeros y maestros)
     if (_userGrado == 'companero' || _userGrado == 'maestro') {
-      views.add(_buildMiembrosList('companero'));
+      views.add(_buildMiembrosListView('companero'));
     }
     
     // Maestros (visible solo para maestros)
     if (_userGrado == 'maestro') {
-      views.add(_buildMiembrosList('maestro'));
+      views.add(_buildMiembrosListView('maestro'));
     }
     
     return views;
   }
   
-  Widget _buildMiembrosList(String grado) {
+  Widget _buildMiembrosListView(String grado) {
     // Aquí, en una implementación real, cargarías datos desde el backend
     // Por ahora, usamos datos simulados
     
