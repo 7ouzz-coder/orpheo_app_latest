@@ -8,14 +8,13 @@ import 'package:orpheo_app/data/datasources/remote/auth_remote_datasource.dart';
 import 'package:orpheo_app/data/datasources/remote/documentos_remote_datasource.dart';
 import 'package:orpheo_app/data/datasources/remote/miembros_remote_datasource.dart';
 import 'package:orpheo_app/data/repositories/auth_repository_impl.dart';
-// Comentar o corregir rutas que den error:
-// import 'package:orpheo_app/data/repositories/documentos_repository_impl.dart';
+import 'package:orpheo_app/data/repositories/documentos_repository_impl.dart';
 import 'package:orpheo_app/data/repositories/miembros_repository_impl.dart';
 import 'package:orpheo_app/domain/repositories/auth_repository.dart';
 import 'package:orpheo_app/domain/repositories/documentos_repository.dart';
 import 'package:orpheo_app/domain/repositories/miembros_repository.dart';
 import 'package:orpheo_app/presentation/bloc/auth/auth_bloc.dart';
-// import 'package:orpheo_app/presentation/bloc/documentos/documentos_bloc.dart';
+import 'package:orpheo_app/presentation/bloc/documentos/documentos_bloc.dart';
 import 'package:orpheo_app/presentation/bloc/miembros/miembros_bloc.dart';
 
 final sl = GetIt.instance;
@@ -69,9 +68,8 @@ Future<void> init() async {
   );
   
   //! Features - Documentos
-  // Comenta temporalmente lo que dé error
   // Bloc
-  /*sl.registerFactory(
+  sl.registerFactory(
     () => DocumentosBloc(
       documentosRepository: sl(),
     ),
@@ -91,7 +89,7 @@ Future<void> init() async {
       client: sl(),
       secureStorage: sl(),
     ),
-  );*/
+  );
   
   //! Shared
   sl.registerLazySingleton<SecureStorageHelper>(

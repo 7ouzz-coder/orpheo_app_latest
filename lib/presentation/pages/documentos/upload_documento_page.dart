@@ -8,6 +8,7 @@ import 'package:orpheo_app/presentation/bloc/documentos/documentos_event.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_state.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'package:orpheo_app/core/utils/file_picker_helper.dart';
 
 class UploadDocumentoPage extends StatefulWidget {
   final String categoria;

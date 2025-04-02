@@ -11,6 +11,7 @@ import 'package:orpheo_app/data/models/documentos/documento_model.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:http_parser/http_parser.dart';
+import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 class DocumentosRemoteDataSource {
   final http.Client client;
@@ -20,6 +21,16 @@ class DocumentosRemoteDataSource {
     required this.client,
     required this.secureStorage,
   });
+  
+  // Método para verificar si se puede abrir una URL
+  Future<bool> canLaunchUrl(Uri uri) async {
+    return await url_launcher.canLaunchUrl(uri);
+  }
+  
+  // Método para abrir una URL
+  Future<bool> launchUrl(Uri uri, {url_launcher.LaunchMode? mode}) async {
+    return await url_launcher.launchUrl(uri, mode: mode ?? url_launcher.LaunchMode.platformDefault);
+  }
   
   // Obtener todos los documentos
   Future<List<DocumentoModel>> getDocumentos() async {

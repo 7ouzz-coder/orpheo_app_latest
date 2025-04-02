@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:orpheo_app/core/di/injection_container.dart';
-import 'package:orpheo_app/domain/entities/documentos/documento.dart';
+import 'package:orpheo_app/domain/entities/documento.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_bloc.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_event.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_state.dart';
-import 'package:url_launcher/url_launcher.dart' as launcher;
+import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:path/path.dart' as path;
 
 class DocumentoDetailPage extends StatelessWidget {
@@ -18,6 +18,16 @@ class DocumentoDetailPage extends StatelessWidget {
     Key? key,
     required this.documentoId,
   }) : super(key: key);
+
+  // Método para verificar si se puede abrir una URL
+  Future<bool> canLaunchUrl(Uri uri) async {
+    return await url_launcher.canLaunchUrl(uri);
+  }
+  
+  // Método para abrir una URL
+  Future<bool> launchUrl(Uri uri, {url_launcher.LaunchMode? mode}) async {
+    return await url_launcher.launchUrl(uri, mode: mode ?? url_launcher.LaunchMode.platformDefault);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -427,7 +437,7 @@ class DocumentoDetailPage extends StatelessWidget {
                     onPressed: () async {
                       final uri = Uri.parse(documento.url!);
                       if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        await launchUrl(uri, mode: url_launcher.LaunchMode.externalApplication);
                       } else {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(

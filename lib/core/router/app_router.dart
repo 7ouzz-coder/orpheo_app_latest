@@ -1,100 +1,34 @@
-import 'package:flutter/material.dart';
-// Comenta o corrige las importaciones que causan problemas
-// import 'package:orpheo_app/presentation/pages/auth/login_screen.dart';
-// import 'package:orpheo_app/presentation/pages/auth/register_screen.dart';
-// import 'package:orpheo_app/presentation/pages/auth/splash_screen.dart';
-import 'package:orpheo_app/presentation/pages/grados/home_page.dart';
+// lib/core/router/app_router.dart
 
-// Importar las nuevas páginas que vamos a crear
-// import 'package:orpheo_app/presentation/pages/miembros/miembros_page.dart';
-// import 'package:orpheo_app/presentation/pages/documentos/documentos_page.dart';
-// import 'package:orpheo_app/presentation/pages/programas/programas_page.dart';
-// import 'package:orpheo_app/presentation/pages/notificaciones/notificaciones_page.dart';
-// import 'package:orpheo_app/presentation/pages/perfil/perfil_page.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:orpheo_app/presentation/pages/auth/login_screen.dart';
+import 'package:orpheo_app/presentation/pages/auth/register_screen.dart';
+import 'package:orpheo_app/presentation/pages/auth/splash_screen.dart';
+import 'package:orpheo_app/presentation/pages/grados/home_page.dart';
+import 'package:orpheo_app/presentation/pages/programas/programas_page.dart';
 
 class AppRouter {
+  // Un método simple para generar rutas a través de MaterialPageRoute
+  // Esto es lo que usamos actualmente en nuestra aplicación
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       // Auth Routes
       case '/':
-        // return MaterialPageRoute(builder: (_) => const SplashScreen());
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(
-              child: Text('SplashScreen - Pendiente de implementar'),
-            ),
-          ),
-        );
+        return MaterialPageRoute(builder: (_) => const SplashScreen());
       case '/login':
-        // return MaterialPageRoute(builder: (_) => const LoginScreen());
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(
-              child: Text('LoginScreen - Pendiente de implementar'),
-            ),
-          ),
-        );
+        return MaterialPageRoute(builder: (_) => const LoginScreen());
       case '/register':
-        // return MaterialPageRoute(builder: (_) => const RegisterScreen());
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(
-              child: Text('RegisterScreen - Pendiente de implementar'),
-            ),
-          ),
-        );
+        return MaterialPageRoute(builder: (_) => const RegisterScreen());
       
       // Main Routes
       case '/home':
         return MaterialPageRoute(builder: (_) => const HomePage());
       
       // Feature Routes
-      case '/miembros':
-        // return MaterialPageRoute(builder: (_) => const MiembrosPage());
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(
-              child: Text('MiembrosPage - Pendiente de implementar'),
-            ),
-          ),
-        );
-      case '/documentos':
-        // return MaterialPageRoute(builder: (_) => const DocumentosPage());
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(
-              child: Text('DocumentosPage - Pendiente de implementar'),
-            ),
-          ),
-        );
       case '/programas':
-        // return MaterialPageRoute(builder: (_) => const ProgramasPage());
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(
-              child: Text('ProgramasPage - Pendiente de implementar'),
-            ),
-          ),
-        );
-      case '/notificaciones':
-        // return MaterialPageRoute(builder: (_) => const NotificacionesPage());
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(
-              child: Text('NotificacionesPage - Pendiente de implementar'),
-            ),
-          ),
-        );
-      case '/perfil':
-        // return MaterialPageRoute(builder: (_) => const PerfilPage());
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(
-              child: Text('PerfilPage - Pendiente de implementar'),
-            ),
-          ),
-        );
-        
+        return MaterialPageRoute(builder: (_) => const ProgramasPage());
+      
       // Default - Invalid route
       default:
         return MaterialPageRoute(
@@ -106,4 +40,43 @@ class AppRouter {
         );
     }
   }
+  
+  // Una configuración de GoRouter para futuras implementaciones
+  // No se usa actualmente, pero está lista para ser implementada
+  static final router = GoRouter(
+    initialLocation: '/',
+    debugLogDiagnostics: true,
+    routes: [
+      // Auth Routes
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      
+      // Main Routes
+      GoRoute(
+        path: '/home',
+        builder: (context, state) => const HomePage(),
+      ),
+      
+      // Feature Routes
+      GoRoute(
+        path: '/programas',
+        builder: (context, state) => const ProgramasPage(),
+      ),
+    ],
+    errorBuilder: (context, state) => Scaffold(
+      body: Center(
+        child: Text('Error: ${state.error}'),
+      ),
+    ),
+  );
 }

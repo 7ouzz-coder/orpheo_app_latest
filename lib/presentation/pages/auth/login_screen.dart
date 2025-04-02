@@ -29,8 +29,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    
     return Scaffold(
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
@@ -70,8 +68,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             Hero(
                               tag: 'app_logo',
                               child: Container(
-                                width: screenSize.width * 0.3,
-                                height: screenSize.width * 0.3,
+                                width: 120,
+                                height: 120,
                                 decoration: BoxDecoration(
                                   color: Colors.blue.shade100,
                                   shape: BoxShape.circle,
@@ -199,8 +197,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue,
-                                  foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -224,21 +220,23 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                             
-                            // Versión
-                            const SizedBox(height: 16),
-                            Text(
-                              'Orpheo App v1.0.0',
+                            // Credenciales de demo
+                            const SizedBox(height: 48),
+                            const Text(
+                              'Credenciales de prueba:',
                               style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            
-                            // Credenciales para test
-                            const SizedBox(height: 24),
-                            OutlinedButton(
-                              onPressed: () => _showTestCredentialsDialog(context),
-                              child: const Text('Ver credenciales de prueba'),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Usuario: admin\nContraseña: admin123',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
                           ],
                         ),
@@ -248,56 +246,6 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         },
       ),
-    );
-  }
-  
-  void _showTestCredentialsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Credenciales de Prueba'),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text('Administrador:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('• Usuario: admin'),
-                Text('• Contraseña: admin123'),
-                SizedBox(height: 10),
-                Text('Maestro:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('• Usuario: maestro'),
-                Text('• Contraseña: maestro123'),
-                SizedBox(height: 10),
-                Text('Compañero:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('• Usuario: companero'),
-                Text('• Contraseña: companero123'),
-                SizedBox(height: 10),
-                Text('Aprendiz:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('• Usuario: aprendiz'),
-                Text('• Contraseña: aprendiz123'),
-                SizedBox(height: 10),
-                Text('Secretario:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('• Usuario: secretario'),
-                Text('• Contraseña: secretario123'),
-                SizedBox(height: 10),
-                Text('Tesorero:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('• Usuario: tesorero'),
-                Text('• Contraseña: tesorero123'),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cerrar'),
-            ),
-          ],
-        );
-      },
     );
   }
 }
