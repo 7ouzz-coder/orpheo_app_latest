@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:orpheo_app/core/utils/document_helper.dart';
 import 'package:orpheo_app/data/datasources/remote/auth_remote_datasource.dart';
 import 'package:intl/intl.dart';
 
@@ -97,11 +98,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
   
   // Método para simular selección de documento
-  void _pickDocument() {
-    setState(() {
-      _hasSelectedDocument = true;
-      _selectedDocumentName = "solicitud_firmada.pdf";
-    });
+  void _pickDocument() async {
+    final fileInfo = await DocumentHelper.pickDocument(
+      context: context,
+      allowedExtensions: ['pdf'],
+      title: 'Seleccionar solicitud firmada',
+    );
+    
+    if (fileInfo != null) {
+      setState(() {
+        _hasSelectedDocument = true;
+        _selectedDocumentName = fileInfo.name;
+      });
+    }
   }
   
   // Método para seleccionar una fecha

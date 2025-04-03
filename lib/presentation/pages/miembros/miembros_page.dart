@@ -65,6 +65,11 @@ class _MiembrosPageState extends State<MiembrosPage> with SingleTickerProviderSt
     }
     
     _tabController = TabController(length: tabCount, vsync: this);
+    
+    // Tras inicializar el TabController, cargar la lista inicial de miembros
+    if (context.read<MiembrosBloc>().state is! MiembrosLoaded) {
+      context.read<MiembrosBloc>().add(const LoadMiembros(grado: 'aprendiz'));
+    }
   }
 
   @override
@@ -88,7 +93,7 @@ class _MiembrosPageState extends State<MiembrosPage> with SingleTickerProviderSt
                       icon: const Icon(Icons.clear),
                       onPressed: () {
                         _searchController.clear();
-                        // _onSearchCleared(context);
+                        _onSearchCleared();
                       },
                     ),
                     border: OutlineInputBorder(
@@ -97,7 +102,7 @@ class _MiembrosPageState extends State<MiembrosPage> with SingleTickerProviderSt
                     filled: true,
                     fillColor: Colors.white,
                   ),
-                  // onChanged: (value) => _onSearch(context, value),
+                  onChanged: _onSearch,
                 ),
               ),
               
@@ -105,7 +110,7 @@ class _MiembrosPageState extends State<MiembrosPage> with SingleTickerProviderSt
               TabBar(
                 controller: _tabController,
                 tabs: _buildTabs(),
-                // onTap: (index) => _onTabSelected(context, index),
+                onTap: _onTabSelected,
               ),
             ],
           ),
@@ -117,8 +122,6 @@ class _MiembrosPageState extends State<MiembrosPage> with SingleTickerProviderSt
       ),
       floatingActionButton: _userGrado == 'maestro' ? FloatingActionButton(
         onPressed: () {
-          // Navegar a la pantalla de agregar miembro
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => const AddMiembroPage()));
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Función de agregar miembro no implementada aún')),
           );
@@ -129,7 +132,6 @@ class _MiembrosPageState extends State<MiembrosPage> with SingleTickerProviderSt
   }
   
   // Métodos para manejo de tabs y eventos
-  
   List<Widget> _buildTabs() {
     final tabs = <Widget>[];
     
@@ -168,11 +170,214 @@ class _MiembrosPageState extends State<MiembrosPage> with SingleTickerProviderSt
     return views;
   }
   
-  Widget _buildMiembrosListView(String grado) {
-    // Aquí, en una implementación real, cargarías datos desde el backend
-    // Por ahora, usamos datos simulados
+  void _onTabSelected(int index) {
+    String grado;
     
-    final List<Map<String, String>> miembrosSimulados = [
+    switch(index) {
+      case 0:
+        grado = 'aprendiz';
+        break;
+      case 1:
+        grado = 'companero';
+        break;
+      case 2:
+        grado = 'maestro';
+        break;
+      default:
+        grado = 'aprendiz';
+        break;
+    }
+    
+    // Si hay texto en la búsqueda, filtrar por búsqueda y grado
+    if (_searchController.text.isNotEmpty) {
+      context.read<MiembrosBloc>().add(SearchMiembros(
+        query: _searchController.text,
+        grado: grado,
+      ));
+    } else {
+      // Si no hay búsqueda, solo filtrar por grado
+      context.read<MiembrosBloc>().add(LoadMiembros(grado: grado));
+    }
+  }
+  
+  void _onSearch(String query) {
+    if (query.length >= 3) {
+      // Solo buscar si hay al menos 3 caracteres
+      final currentTabIndex = _tabController.index;
+      String grado;
+      
+      switch(currentTabIndex) {
+        case 0:
+          grado = 'aprendiz';
+          break;
+        case 1:
+          grado = 'companero';
+          break;
+        case 2:
+          grado = 'maestro';
+          break;
+        default:
+          grado = 'aprendiz';
+          break;
+      }
+      
+      context.read<MiembrosBloc>().add(SearchMiembros(
+        query: query,
+        grado: grado,
+      ));
+    } else if (query.isEmpty) {
+      _onSearchCleared();
+    }
+  }
+  
+  void _onSearchCleared() {
+    final currentTabIndex = _tabController.index;
+    String grado;
+    
+    switch(currentTabIndex) {
+      case 0:
+        grado = 'aprendiz';
+        break;
+      case 1:
+        grado = 'companero';
+        break;
+      case 2:
+        grado = 'maestro';
+        break;
+      default:
+        grado = 'aprendiz';
+        break;
+    }
+    
+    context.read<MiembrosBloc>().add(LoadMiembros(grado: grado));
+  }
+  
+  Widget _buildMiembrosListView(String grado) {
+    return BlocBuilder<MiembrosBloc, MiembrosState>(
+      builder: (context, state) {
+        if (state is MiembrosInitial) {
+          // Cargar miembros al iniciar
+          context.read<MiembrosBloc>().add(LoadMiembros(grado: grado));
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        if (state is MiembrosLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        if (state is MiembrosError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  state.message,
+                  style: const TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<MiembrosBloc>().add(LoadMiembros(grado: grado));
+                  },
+                  child: const Text('Reintentar'),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        if (state is MiembrosLoaded) {
+          // Filtrar miembros por grado actual
+          final miembrosFiltrados = state.miembros
+              .where((miembro) => miembro.grado == grado)
+              .toList();
+          
+          if (miembrosFiltrados.isEmpty) {
+            // Mostrar mensaje cuando no hay miembros
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.group_off,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    state.searchQuery.isNotEmpty
+                        ? 'No se encontraron miembros para: "${state.searchQuery}"'
+                        : 'No hay miembros disponibles',
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }
+          
+          return RefreshIndicator(
+            onRefresh: () async {
+              context.read<MiembrosBloc>().add(LoadMiembros(grado: grado));
+            },
+            child: ListView.builder(
+              itemCount: miembrosFiltrados.length,
+              padding: const EdgeInsets.all(8.0),
+              itemBuilder: (context, index) {
+                final miembro = miembrosFiltrados[index];
+                return _buildMiembroCard(context, miembro);
+              },
+            ),
+          );
+        }
+        
+        // En caso de usar datos de prueba mientras no hay conexión
+        if (_tabController.index == _getTabIndexForGrado(grado)) {
+          return _buildMockMiembrosList(grado);
+        }
+        
+        return const Center(child: Text('Estado no manejado'));
+      },
+    );
+  }
+  
+  Widget _buildMiembroCard(BuildContext context, Miembro miembro) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: _getColorForGrado(miembro.grado),
+          child: Text(
+            miembro.nombres.isNotEmpty ? miembro.nombres[0].toUpperCase() : 'M',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        title: Text(miembro.nombreCompleto),
+        subtitle: miembro.cargo != null && miembro.cargo!.isNotEmpty 
+            ? Text(miembro.cargo!) 
+            : (miembro.email != null ? Text(miembro.email!) : null),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: () {
+          Navigator.push(
+            context, 
+            MaterialPageRoute(
+              builder: (context) => MiembroDetailPage(miembroId: miembro.id),
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  // Datos simulados para pruebas sin backend
+  Widget _buildMockMiembrosList(String grado) {
+    final List<Map<String, dynamic>> miembrosSimulados = [
       {'nombre': 'Juan Pérez', 'cargo': grado == 'maestro' ? 'Venerable Maestro' : ''},
       {'nombre': 'Roberto Gómez', 'cargo': grado == 'maestro' ? 'Primer Vigilante' : ''},
       {'nombre': 'Carlos Rodríguez', 'cargo': grado == 'maestro' ? 'Segundo Vigilante' : ''},
@@ -196,12 +401,25 @@ class _MiembrosPageState extends State<MiembrosPage> with SingleTickerProviderSt
           subtitle: miembro['cargo']!.isNotEmpty ? Text(miembro['cargo']!) : null,
           onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Perfil de ${miembro['nombre']}')),
+              SnackBar(content: Text('Perfil de ${miembro['nombre']} - Modo Prueba')),
             );
           },
         );
       },
     );
+  }
+  
+  int _getTabIndexForGrado(String grado) {
+    switch(grado) {
+      case 'aprendiz':
+        return 0;
+      case 'companero':
+        return _userGrado == 'maestro' ? 1 : 0;
+      case 'maestro':
+        return _userGrado == 'maestro' ? 2 : 0;
+      default:
+        return 0;
+    }
   }
   
   Color _getColorForGrado(String grado) {

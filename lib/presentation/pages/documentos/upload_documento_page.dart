@@ -1,14 +1,14 @@
 // lib/presentation/pages/documentos/upload_documento_page.dart
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:orpheo_app/core/di/injection_container.dart';
+import 'package:orpheo_app/core/utils/document_helper.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_bloc.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_event.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_state.dart';
-import 'package:file_picker/file_picker.dart';
-import 'dart:io';
-import 'package:orpheo_app/core/utils/file_picker_helper.dart';
+import 'package:path/path.dart' as path;
 
 class UploadDocumentoPage extends StatefulWidget {
   final String categoria;
@@ -29,10 +29,7 @@ class _UploadDocumentoPageState extends State<UploadDocumentoPage> {
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   
-  String? _selectedFilePath;
-  String? _selectedFileName;
-  String? _selectedFileType;
-  int? _selectedFileSize;
+  FileInfo? _selectedFile;
   
   String _categoria = 'aprendiz';
   String? _subcategoria;
@@ -52,35 +49,27 @@ class _UploadDocumentoPageState extends State<UploadDocumentoPage> {
   }
   
   Future<void> _pickFile() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'txt'],
-      );
-      
-      if (result != null) {
-        setState(() {
-          _selectedFilePath = result.files.single.path;
-          _selectedFileName = result.files.single.name;
-          _selectedFileType = result.files.single.extension;
-          _selectedFileSize = result.files.single.size;
-          
-          // Autocompletar el nombre si está vacío
-          if (_nombreController.text.isEmpty) {
-            _nombreController.text = _selectedFileName!;
-          }
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al seleccionar archivo: $e')),
-      );
+    FileInfo? fileInfo = await DocumentHelper.pickDocument(
+      context: context,
+      allowedExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'txt'],
+      title: 'Seleccionar ${widget.esPlancha ? 'plancha' : 'documento'}',
+    );
+    
+    if (fileInfo != null) {
+      setState(() {
+        _selectedFile = fileInfo;
+        
+        // Autocompletar el nombre si está vacío
+        if (_nombreController.text.isEmpty) {
+          _nombreController.text = fileInfo.name;
+        }
+      });
     }
   }
   
   void _onSubmit(BuildContext context) {
     if (_formKey.currentState!.validate()) {
-      if (_selectedFilePath == null) {
+      if (_selectedFile == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Por favor seleccione un archivo')),
         );
@@ -104,7 +93,7 @@ class _UploadDocumentoPageState extends State<UploadDocumentoPage> {
       context.read<DocumentosBloc>().add(
         UploadDocumento(
           documentoData: documentoData, 
-          filePath: _selectedFilePath!,
+          filePath: _selectedFile!.path,
         ),
       );
     }
@@ -160,7 +149,7 @@ class _UploadDocumentoPageState extends State<UploadDocumentoPage> {
                                   ),
                                   const SizedBox(height: 16),
                                   
-                                  if (_selectedFilePath != null) ...[
+                                  if (_selectedFile != null) ...[
                                     // Mostrar información del archivo seleccionado
                                     Container(
                                       padding: const EdgeInsets.all(12),
@@ -172,8 +161,8 @@ class _UploadDocumentoPageState extends State<UploadDocumentoPage> {
                                       child: Row(
                                         children: [
                                           Icon(
-                                            _getIconForFileType(_selectedFileType ?? ''),
-                                            color: _getColorForFileType(_selectedFileType ?? ''),
+                                            _getIconForFileType(_selectedFile!.extension),
+                                            color: _getColorForFileType(_selectedFile!.extension),
                                             size: 32,
                                           ),
                                           const SizedBox(width: 12),
@@ -182,14 +171,14 @@ class _UploadDocumentoPageState extends State<UploadDocumentoPage> {
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  _selectedFileName ?? 'Archivo desconocido',
+                                                  _selectedFile!.name,
                                                   style: const TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  'Tipo: ${_selectedFileType?.toUpperCase() ?? 'Desconocido'} - Tamaño: ${_formatFileSize(_selectedFileSize ?? 0)}',
+                                                  'Tipo: ${_selectedFile!.extension.toUpperCase()} - Tamaño: ${_selectedFile!.formattedSize}',
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     color: Colors.grey[600],
@@ -202,10 +191,7 @@ class _UploadDocumentoPageState extends State<UploadDocumentoPage> {
                                             icon: const Icon(Icons.delete, color: Colors.red),
                                             onPressed: () {
                                               setState(() {
-                                                _selectedFilePath = null;
-                                                _selectedFileName = null;
-                                                _selectedFileType = null;
-                                                _selectedFileSize = null;
+                                                _selectedFile = null;
                                               });
                                             },
                                           ),
@@ -218,7 +204,7 @@ class _UploadDocumentoPageState extends State<UploadDocumentoPage> {
                                   ElevatedButton.icon(
                                     onPressed: _pickFile,
                                     icon: const Icon(Icons.attach_file),
-                                    label: Text(_selectedFilePath == null 
+                                    label: Text(_selectedFile == null 
                                         ? 'Seleccionar Archivo' 
                                         : 'Cambiar Archivo'),
                                     style: ElevatedButton.styleFrom(
@@ -400,18 +386,5 @@ class _UploadDocumentoPageState extends State<UploadDocumentoPage> {
       default:
         return Colors.grey;
     }
-  }
-  
-  String _formatFileSize(int bytes) {
-    const suffixes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    var i = 0;
-    double size = bytes.toDouble();
-    
-    while (size >= 1024 && i < suffixes.length - 1) {
-      size /= 1024;
-      i++;
-    }
-    
-    return '${size.toStringAsFixed(1)} ${suffixes[i]}';
   }
 }

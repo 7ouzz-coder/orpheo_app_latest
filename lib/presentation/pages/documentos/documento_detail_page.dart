@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:orpheo_app/core/di/injection_container.dart';
+import 'package:orpheo_app/core/utils/document_helper.dart';
 import 'package:orpheo_app/domain/entities/documento.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_bloc.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_event.dart';
 import 'package:orpheo_app/presentation/bloc/documentos/documentos_state.dart';
-import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:path/path.dart' as path;
+import 'package:url_launcher/url_launcher.dart';
 
 class DocumentoDetailPage extends StatelessWidget {
   final int documentoId;
@@ -18,16 +19,6 @@ class DocumentoDetailPage extends StatelessWidget {
     Key? key,
     required this.documentoId,
   }) : super(key: key);
-
-  // Método para verificar si se puede abrir una URL
-  Future<bool> canLaunchUrl(Uri uri) async {
-    return await url_launcher.canLaunchUrl(uri);
-  }
-  
-  // Método para abrir una URL
-  Future<bool> launchUrl(Uri uri, {url_launcher.LaunchMode? mode}) async {
-    return await url_launcher.launchUrl(uri, mode: mode ?? url_launcher.LaunchMode.platformDefault);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -123,24 +114,14 @@ class DocumentoDetailPage extends StatelessWidget {
             
             if (state is DocumentoDownloaded) {
               // Mostrar detalles con mensaje de descarga exitosa
-              // Podríamos hacer algo más interesante aquí, como un snackbar o dialog
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.message),
                     action: SnackBarAction(
                       label: 'Abrir',
-                      onPressed: () async {
-                        final uri = Uri.file(state.localPath);
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri);
-                        } else {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('No se pudo abrir el archivo')),
-                            );
-                          }
-                        }
+                      onPressed: () {
+                        _openFile(state.localPath, context);
                       },
                     ),
                   ),
@@ -187,6 +168,10 @@ class DocumentoDetailPage extends StatelessWidget {
         _showDeleteConfirmationDialog(context, documento);
         break;
     }
+  }
+
+  void _openFile(String localPath, BuildContext context) async {
+    await DocumentHelper.openFile(localPath, context: context);
   }
   
   void _showDeleteConfirmationDialog(BuildContext context, Documento documento) {
@@ -437,7 +422,7 @@ class DocumentoDetailPage extends StatelessWidget {
                     onPressed: () async {
                       final uri = Uri.parse(documento.url!);
                       if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: url_launcher.LaunchMode.externalApplication);
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
                       } else {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -592,5 +577,15 @@ class DocumentoDetailPage extends StatelessWidget {
     }
     
     return '${size.toStringAsFixed(1)} ${suffixes[i]}';
+  }
+  
+  // Método para verificar si una URL se puede abrir
+  Future<bool> canLaunchUrl(Uri uri) async {
+    return await DocumentHelper.canLaunchUrl(uri);
+  }
+  
+  // Método para abrir una URL
+  Future<bool> launchUrl(Uri uri, {LaunchMode? mode}) async {
+    return await DocumentHelper.launchUrl(uri, mode: mode);
   }
 }
