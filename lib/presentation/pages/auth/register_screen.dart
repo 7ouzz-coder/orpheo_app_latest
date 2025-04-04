@@ -1,8 +1,11 @@
 // lib/presentation/pages/auth/register_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:orpheo_app/core/network/http_service.dart';
 import 'package:orpheo_app/core/utils/document_helper.dart';
+import 'package:orpheo_app/data/datasources/local/secure_storage_helper.dart';
 import 'package:orpheo_app/data/datasources/remote/auth_remote_datasource.dart';
 import 'package:intl/intl.dart';
 
@@ -241,7 +244,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     
     try {
       final client = http.Client();
-      final authRemoteDataSource = AuthRemoteDataSource(client: client);
+      final httpService = HttpService(client: client, secureStorage: SecureStorageHelper(const FlutterSecureStorage()));
+      final authRemoteDataSource = AuthRemoteDataSource(httpService: httpService, secureStorage: SecureStorageHelper(const FlutterSecureStorage()));
       
       // Preparar el mapa de datos para el registro
       final userData = {

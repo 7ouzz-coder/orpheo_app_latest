@@ -27,6 +27,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  //! External
+  sl.registerLazySingleton(() => http.Client());
+  sl.registerLazySingleton(() => const FlutterSecureStorage());
+  sl.registerLazySingleton(() => Connectivity());
+  
+  //! Helpers
+  sl.registerLazySingleton<SecureStorageHelper>(
+    () => SecureStorageHelper(sl()),
+  );
+  
   //! Core
   // Network Info
   sl.registerLazySingleton<NetworkInfo>(
@@ -42,22 +52,6 @@ Future<void> init() async {
   );
 
   //! Features - Auth
-  // Bloc
-  sl.registerFactory(
-    () => AuthBloc(
-      authRepository: sl(),
-    ),
-  );
-  
-  // Repositories
-  sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(
-      remoteDataSource: sl(),
-      secureStorage: sl(),
-      networkInfo: sl(),
-    ),
-  );
-  
   // Data sources
   sl.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSource(
@@ -66,11 +60,29 @@ Future<void> init() async {
     ),
   );
   
-  //! Features - Miembros
+  // Repositories
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(
+      remoteDataSource: sl(),
+      secureStorage: sl(),
+    ),
+  );
+  
   // Bloc
   sl.registerFactory(
-    () => MiembrosBloc(
-      miembrosRepository: sl(),
+  () => AuthBloc(
+    authRepository: sl(),
+    authRemoteDataSource: sl(),
+    secureStorage: sl(),
+  ),
+);
+  
+  //! Features - Miembros
+  // Data sources
+  sl.registerLazySingleton<MiembrosRemoteDataSource>(
+    () => MiembrosRemoteDataSource(
+      httpService: sl(),
+      secureStorage: sl(),
     ),
   );
   
@@ -83,19 +95,19 @@ Future<void> init() async {
     ),
   );
   
-  // Data sources
-  sl.registerLazySingleton<MiembrosRemoteDataSource>(
-    () => MiembrosRemoteDataSource(
-      httpService: sl(),
-      secureStorage: sl(),
+  // Bloc
+  sl.registerFactory(
+    () => MiembrosBloc(
+      miembrosRepository: sl(),
     ),
   );
   
   //! Features - Documentos
-  // Bloc
-  sl.registerFactory(
-    () => DocumentosBloc(
-      documentosRepository: sl(),
+  // Data sources
+  sl.registerLazySingleton<DocumentosRemoteDataSource>(
+    () => DocumentosRemoteDataSource(
+      httpService: sl(),
+      secureStorage: sl(),
     ),
   );
   
@@ -108,19 +120,19 @@ Future<void> init() async {
     ),
   );
   
-  // Data sources
-  sl.registerLazySingleton<DocumentosRemoteDataSource>(
-    () => DocumentosRemoteDataSource(
-      httpService: sl(),
-      secureStorage: sl(),
+  // Bloc
+  sl.registerFactory(
+    () => DocumentosBloc(
+      documentosRepository: sl(),
     ),
   );
   
   //! Features - Programas
-  // Bloc
-  sl.registerFactory(
-    () => ProgramasBloc(
-      programasRepository: sl(),
+  // Data sources
+  sl.registerLazySingleton<ProgramasRemoteDataSource>(
+    () => ProgramasRemoteDataSource(
+      httpService: sl(),
+      secureStorage: sl(),
     ),
   );
   
@@ -133,21 +145,10 @@ Future<void> init() async {
     ),
   );
   
-  // Data sources
-  sl.registerLazySingleton<ProgramasRemoteDataSource>(
-    () => ProgramasRemoteDataSource(
-      httpService: sl(),
-      secureStorage: sl(),
+  // Bloc
+  sl.registerFactory(
+    () => ProgramasBloc(
+      programasRepository: sl(),
     ),
-  );
-  
-  //! External
-  sl.registerLazySingleton(() => http.Client());
-  sl.registerLazySingleton(() => const FlutterSecureStorage());
-  sl.registerLazySingleton(() => Connectivity());
-  
-  //! Helpers
-  sl.registerLazySingleton<SecureStorageHelper>(
-    () => SecureStorageHelper(sl()),
   );
 }
