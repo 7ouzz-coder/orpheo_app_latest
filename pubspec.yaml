@@ -24,17 +24,28 @@ dependencies:
   # UI
   google_fonts: ^5.1.0
   flutter_spinkit: ^5.2.0
+  cached_network_image: ^3.3.0
 
   # Herramientas
   intl: ^0.18.1
   http: ^1.1.0
   flutter_secure_storage: ^8.0.0
-  path_provider: ^2.0.15
+  path_provider: ^2.1.1
   image_picker: ^1.0.4
   url_launcher: ^6.2.1
   http_parser: ^4.0.2
   path: ^1.8.3
   open_file: ^3.3.2
+  connectivity_plus: ^4.0.2
+  shared_preferences: ^2.2.2
+  
+  # Almacenamiento local
+  drift: ^2.12.1
+  sqlite3_flutter_libs: ^0.5.17
+  
+  # Análisis y validación
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
 
 dev_dependencies:
   flutter_test:
@@ -42,8 +53,31 @@ dev_dependencies:
   flutter_lints: ^2.0.2
   build_runner: ^2.4.6
   json_serializable: ^6.7.1
+  drift_dev: ^2.12.1
+  freezed: ^2.4.5
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.3.5
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  min_sdk_android: 21
+  
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/images/splash_logo.png
+  branding: assets/images/branding.png
+  color_dark: "#262626"
+  image_dark: assets/images/splash_logo_dark.png
+  branding_dark: assets/images/branding_dark.png
+  android_12:
+    image: assets/images/splash_logo_android12.png
+    icon_background_color: "#FFFFFF"
+    image_dark: assets/images/splash_logo_android12_dark.png
+    icon_background_color_dark: "#262626"

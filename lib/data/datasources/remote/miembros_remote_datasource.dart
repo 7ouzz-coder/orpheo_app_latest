@@ -1,228 +1,159 @@
 // lib/data/datasources/remote/miembros_remote_datasource.dart
 
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:orpheo_app/core/constants/api_constants.dart';
 import 'package:orpheo_app/core/errors/exceptions.dart';
+import 'package:orpheo_app/core/network/http_service.dart';
 import 'package:orpheo_app/data/datasources/local/secure_storage_helper.dart';
 import 'package:orpheo_app/data/models/miembros/miembro_model.dart';
 
 class MiembrosRemoteDataSource {
-  final http.Client client;
+  final HttpService httpService;
   final SecureStorageHelper secureStorage;
   
   MiembrosRemoteDataSource({
-    required this.client,
+    required this.httpService,
     required this.secureStorage,
   });
   
-  // Obtener todos los miembros
+  /// Obtiene todos los miembros
   Future<List<MiembroModel>> getMiembros() async {
     try {
-      final token = await secureStorage.getToken();
-      
-      if (token == null) {
-        throw AuthException(message: 'No hay token de autenticación');
-      }
-      
-      final response = await client.get(
-        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.miembros}'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+      final response = await httpService.get(
+        ApiConstants.miembros,
       );
       
-      if (response.statusCode == 200) {
-        final List<dynamic> miembrosJson = json.decode(response.body);
-        return MiembroModel.fromJsonList(miembrosJson);
-      } else if (response.statusCode == 401) {
-        throw AuthException(message: 'Token inválido o expirado');
-      } else {
-        throw ServerException(message: 'Error al obtener miembros: ${response.statusCode}');
+      if (response is List) {
+        return MiembroModel.fromJsonList(response);
       }
+      
+      throw ServerException(message: 'Formato de respuesta inválido');
     } catch (e) {
-      if (e is AuthException) {
+      if (e is ServerException || e is AuthException || 
+          e is ValidationException || e is NetworkException) {
         rethrow;
       }
       throw ServerException(message: e.toString());
     }
   }
   
-  // Obtener miembros filtrados por grado
+  /// Obtiene miembros filtrados por grado
   Future<List<MiembroModel>> getMiembrosByGrado(String grado) async {
     try {
-      final token = await secureStorage.getToken();
-      
-      if (token == null) {
-        throw AuthException(message: 'No hay token de autenticación');
-      }
-      
-      final response = await client.get(
-        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.miembros}?grado=$grado'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+      final response = await httpService.get(
+        '${ApiConstants.miembros}/grado/$grado',
       );
       
-      if (response.statusCode == 200) {
-        final List<dynamic> miembrosJson = json.decode(response.body);
-        return MiembroModel.fromJsonList(miembrosJson);
-      } else if (response.statusCode == 401) {
-        throw AuthException(message: 'Token inválido o expirado');
-      } else {
-        throw ServerException(message: 'Error al obtener miembros: ${response.statusCode}');
+      if (response is List) {
+        return MiembroModel.fromJsonList(response);
       }
+      
+      throw ServerException(message: 'Formato de respuesta inválido');
     } catch (e) {
-      if (e is AuthException) {
+      if (e is ServerException || e is AuthException || 
+          e is ValidationException || e is NetworkException) {
         rethrow;
       }
       throw ServerException(message: e.toString());
     }
   }
   
-  // Obtener un miembro por id
+  /// Obtiene un miembro por ID
   Future<MiembroModel> getMiembroById(int id) async {
     try {
-      final token = await secureStorage.getToken();
-      
-      if (token == null) {
-        throw AuthException(message: 'No hay token de autenticación');
-      }
-      
-      final response = await client.get(
-        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.miembros}/$id'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+      final response = await httpService.get(
+        '${ApiConstants.miembros}/$id',
       );
       
-      if (response.statusCode == 200) {
-        final miembroJson = json.decode(response.body);
-        return MiembroModel.fromJson(miembroJson);
-      } else if (response.statusCode == 401) {
-        throw AuthException(message: 'Token inválido o expirado');
-      } else if (response.statusCode == 404) {
-        throw NotFoundException(message: 'Miembro no encontrado');
-      } else {
-        throw ServerException(message: 'Error al obtener miembro: ${response.statusCode}');
-      }
+      return MiembroModel.fromJson(response);
     } catch (e) {
-      if (e is AuthException || e is NotFoundException) {
+      if (e is ServerException || e is AuthException || 
+          e is ValidationException || e is NetworkException || 
+          e is NotFoundException) {
         rethrow;
       }
       throw ServerException(message: e.toString());
     }
   }
   
-  // Actualizar un miembro
+  /// Actualiza un miembro
   Future<MiembroModel> updateMiembro(int id, Map<String, dynamic> data) async {
     try {
-      final token = await secureStorage.getToken();
-      
-      if (token == null) {
-        throw AuthException(message: 'No hay token de autenticación');
-      }
-      
-      final response = await client.put(
-        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.miembros}/$id'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode(data),
+      final response = await httpService.put(
+        '${ApiConstants.miembros}/$id',
+        body: data,
       );
       
-      if (response.statusCode == 200) {
-        final miembroJson = json.decode(response.body);
-        return MiembroModel.fromJson(miembroJson);
-      } else if (response.statusCode == 401) {
-        throw AuthException(message: 'Token inválido o expirado');
-      } else if (response.statusCode == 404) {
-        throw NotFoundException(message: 'Miembro no encontrado');
-      } else if (response.statusCode == 400) {
-        throw ValidationException(message: 'Datos inválidos: ${response.body}');
-      } else {
-        throw ServerException(message: 'Error al actualizar miembro: ${response.statusCode}');
-      }
+      return MiembroModel.fromJson(response);
     } catch (e) {
-      if (e is AuthException || e is NotFoundException || e is ValidationException) {
+      if (e is ServerException || e is AuthException || 
+          e is ValidationException || e is NetworkException || 
+          e is NotFoundException) {
         rethrow;
       }
       throw ServerException(message: e.toString());
     }
   }
   
-  // Crear un miembro
+  /// Crea un nuevo miembro
   Future<MiembroModel> createMiembro(Map<String, dynamic> data) async {
     try {
-      final token = await secureStorage.getToken();
-      
-      if (token == null) {
-        throw AuthException(message: 'No hay token de autenticación');
-      }
-      
-      final response = await client.post(
-        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.miembros}'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode(data),
+      final response = await httpService.post(
+        ApiConstants.miembros,
+        body: data,
       );
       
-      if (response.statusCode == 201) {
-        final miembroJson = json.decode(response.body);
-        return MiembroModel.fromJson(miembroJson);
-      } else if (response.statusCode == 401) {
-        throw AuthException(message: 'Token inválido o expirado');
-      } else if (response.statusCode == 400) {
-        throw ValidationException(message: 'Datos inválidos: ${response.body}');
-      } else {
-        throw ServerException(message: 'Error al crear miembro: ${response.statusCode}');
-      }
+      return MiembroModel.fromJson(response);
     } catch (e) {
-      if (e is AuthException || e is ValidationException) {
+      if (e is ServerException || e is AuthException || 
+          e is ValidationException || e is NetworkException) {
         rethrow;
       }
       throw ServerException(message: e.toString());
     }
   }
   
-  // Buscar miembros
+  /// Busca miembros
   Future<List<MiembroModel>> searchMiembros(String query, {String grado = 'todos'}) async {
     try {
-      final token = await secureStorage.getToken();
+      final queryParams = {
+        'query': query,
+      };
       
-      if (token == null) {
-        throw AuthException(message: 'No hay token de autenticación');
-      }
-      
-      String url = '${ApiConstants.baseUrl}${ApiConstants.miembros}/search?query=$query';
       if (grado != 'todos') {
-        url += '&grado=$grado';
+        queryParams['grado'] = grado;
       }
       
-      final response = await client.get(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+      final response = await httpService.get(
+        '${ApiConstants.miembros}/search',
+        queryParameters: queryParams,
       );
       
-      if (response.statusCode == 200) {
-        final List<dynamic> miembrosJson = json.decode(response.body);
-        return MiembroModel.fromJsonList(miembrosJson);
-      } else if (response.statusCode == 401) {
-        throw AuthException(message: 'Token inválido o expirado');
-      } else {
-        throw ServerException(message: 'Error en la búsqueda: ${response.statusCode}');
+      if (response is List) {
+        return MiembroModel.fromJsonList(response);
       }
+      
+      throw ServerException(message: 'Formato de respuesta inválido');
     } catch (e) {
-      if (e is AuthException) {
+      if (e is ServerException || e is AuthException || 
+          e is ValidationException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException(message: e.toString());
+    }
+  }
+  
+  /// Elimina un miembro
+  Future<bool> deleteMiembro(int id) async {
+    try {
+      await httpService.delete(
+        '${ApiConstants.miembros}/$id',
+      );
+      
+      return true;
+    } catch (e) {
+      if (e is ServerException || e is AuthException || 
+          e is ValidationException || e is NetworkException || 
+          e is NotFoundException) {
         rethrow;
       }
       throw ServerException(message: e.toString());
