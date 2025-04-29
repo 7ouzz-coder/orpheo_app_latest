@@ -67,18 +67,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             // Logo
                             Hero(
                               tag: 'app_logo',
-                              child: Container(
-                                width: 120,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade100,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.account_balance, 
-                                  size: 60, 
-                                  color: Colors.blue
-                                ),
+                              child: Image.asset(
+                                'assets/images/Orpheo_logo.png',
+                                width: 150, // Ajusta según el tamaño que necesites
+                                height: 150, // Ajusta según el tamaño que necesites
                               ),
                             ),
                             const SizedBox(height: 24),

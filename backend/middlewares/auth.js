@@ -13,7 +13,7 @@ module.exports = async (req, res, next) => {
       return res.status(401).json({ message: 'No se proporcionó token de autenticación' });
     }
     
-    // El formato típico es "Bearer <token>"
+    // El formato es "Bearer <token>"
     const token = authHeader.split(' ')[1];
     
     if (!token) {
